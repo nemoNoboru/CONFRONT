@@ -3,8 +3,8 @@ from confront import Confront
 import matplotlib.pyplot as plt
 import numpy as np
 
-env = gym.make('Pendulum-v0')
-cft = Confront(3,1)
+env = gym.make('MountainCarContinuous-v0')
+cft = Confront(2,1)
 rewards = []
 
 # set seeds to 0
@@ -21,7 +21,7 @@ for j in range(1500):
         o, reward, done, info = env.step(action % 1)
         #print("Reward is{}".format(reward))
         total_reward += reward
-        cft.observe(action, observation, o, reward, done)
+        cft.observe(action, observation, reward, done)
         observation = o
         if done:
             break
