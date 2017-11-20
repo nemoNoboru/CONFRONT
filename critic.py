@@ -1,22 +1,25 @@
 from keras.models import Sequential
 from keras.layers import Dense
 import numpy as np
-
+from experience_replay import ExperienceReplay
 # Given a set of actions chooses the one with max expected reward
 
-discount = 0.99
+discount = 0.70
 max_batch_size = 10000
+
 
 class Critic():
     def __init__(self, input_dim):
         self.nn = Sequential()
         self.nn.add(Dense(64, input_dim=input_dim))
+        #self.nn.add(Dense(64))
         self.nn.add(Dense(64))
         self.nn.add(Dense(1))
         self.inputs = []
         self.rewards = []
         self.num_batch = 0
         self.nn.compile(loss='mean_squared_error', optimizer='adam')
+        self.experience_replay = ExperienceReplay(5000)
 
     def choose(self, actions, state):
         # create a matrix from states
@@ -36,23 +39,30 @@ class Critic():
             self.fitRewards()
 
     def addToRewards(self, action, state, reward):
-        self.inputs.append(np.append(action,state))
+        self.inputs.append(np.append(action, state))
         self.rewards.append(reward)
 
     def processDataset(self):
         end_reward = self.rewards[-1]
-        for r in self.rewards:
-            r *= (1-discount)
-            r += discount * end_reward
-        t = {"inputs":np.array(self.inputs), "rewards":np.array(self.rewards)}
+        for i in range(1, self.num_batch):
+            r = self.rewards[i - 1]
+            r1 = self.rewards[i]
+            r = ((1 - discount) * r) + (discount * r1)
+
+            self.experience_replay.add(self.inputs[i - 1], r)
+
+        t = {"inputs": np.array(self.inputs), "rewards": np.array(self.rewards)}
+
         self.rewards = []
         self.inputs = []
         return t
 
     def fitRewards(self):
-        self.num_batch = 0
         dataset = self.processDataset()
-        self.nn.fit(dataset['inputs'], dataset['rewards'], epochs=10, verbose=1)
+        datasetOld = self.experience_replay.sample(1000)
+        self.nn.fit(datasetOld['inputs'], datasetOld['rewards'], epochs=3, verbose=1)
+        self.nn.fit(dataset['inputs'], dataset['rewards'], epochs=1, verbose=1)
+        self.num_batch = 0
 
 
     # def observe(self, action, state, new_state, reward, done):
