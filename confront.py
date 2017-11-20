@@ -17,6 +17,6 @@ class Confront():
         self.actor.fit(state, choosed_action)
         return choosed_action
 
-    def observe(self, action, state, reward):
+    def observe(self, action, state, new_state, reward, done):
         # train the critic to improve expected reward
-        self.critic.observe(action, state, reward)
+        self.critic.observe(action, state, new_state, reward, done)

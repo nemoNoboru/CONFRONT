@@ -3,7 +3,7 @@ from tensorforce import Configuration
 import matplotlib.pyplot as plt
 import gym
 
-env = gym.make('LunarLanderContinuous-v2')
+env = gym.make('Pendulum-v0')
 rewards = []
 print(env.action_space.sample())
 # Create a Trust Region Policy Optimization agent
@@ -23,8 +23,8 @@ config = Configuration(
 
 # Create a Proximal Policy Optimization agent
 agent = TRPOAgent(
-    states_spec=dict(type='float', shape=(8,)),
-    actions_spec=dict(type='float', shape=(2)),
+    states_spec=dict(type='float', shape=(3,)),
+    actions_spec=dict(type='float', shape=(1)),
     network_spec=[
         dict(type='dense', size=1024),
         dict(type='dense', size=1024),
@@ -39,19 +39,19 @@ agent = TRPOAgent(
     config=config
 )
 
-for _ in range(50):
+for i in range(1500):
     observation = env.reset()
     total_reward = 0
     while True:
         action = agent.act(observation)
         o, reward, done, info = env.step(action % 1)
-        print("Reward is{}".format(reward))
         total_reward += reward
         agent.observe(reward=reward/200, terminal=done)
         observation = o
         if done:
             break
     rewards.append(total_reward)
+    print("Episode num: {} total reward: {}".format(i, total_reward))
 
 plt.plot(rewards)
 plt.ylabel('Rewards PPO')
