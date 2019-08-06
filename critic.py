@@ -49,8 +49,6 @@ class Critic():
         for i in reversed(range(1, len(self.rewards))):
             r = self.rewards[i]
             self.rewards[i-1] = ((1 - discount) * self.rewards[i-1]) + (discount * r)
-
-        self.rewards = self.normalize(self.rewards)
         
         for i in range(0, len(self.rewards)):
             self.experience_replay.add(self.inputs[i], self.rewards[i])
