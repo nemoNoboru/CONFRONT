@@ -40,12 +40,6 @@ class Critic():
         # add 0.2 to compensate for fuel
         self.rewards.append(reward)
 
-    def normalize(self, d):
-        # d is a (n x dimension) np array
-        d -= np.min(d, axis=0)
-        d /= np.ptp(d, axis=0)
-        return d
-
     def processDataset(self):
 
         if self.rewards[-1] is not 100:
