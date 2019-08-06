@@ -11,7 +11,7 @@ rewards = []
 env.seed(0)
 np.random.seed(0)
 
-for j in range(150):
+for j in range(1000):
     observation = env.reset()
     total_reward = 0
     for i in range(1000):

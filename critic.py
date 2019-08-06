@@ -1,25 +1,23 @@
-from keras.models import Sequential
-from keras.layers import Dense
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
 import numpy as np
 from experience_replay import ExperienceReplay
 # Given a set of actions chooses the one with max expected reward
 
 discount = 0.70
-max_batch_size = 10000
 
 
 class Critic():
     def __init__(self, input_dim):
         self.nn = Sequential()
-        self.nn.add(Dense(64, input_dim=input_dim))
-        #self.nn.add(Dense(64))
-        self.nn.add(Dense(64))
+        self.nn.add(Dense(228, input_dim=input_dim))
+        self.nn.add(Dense(356))
+        self.nn.add(Dense(128))
         self.nn.add(Dense(1))
         self.inputs = []
         self.rewards = []
-        self.num_batch = 0
         self.nn.compile(loss='mean_squared_error', optimizer='adam')
-        self.experience_replay = ExperienceReplay(5000)
+        self.experience_replay = ExperienceReplay(95000)
 
     def choose(self, actions, state):
         # create a matrix from states
@@ -34,24 +32,24 @@ class Critic():
 
     def observe(self, action, state, reward, done):
         self.addToRewards(action, state, reward)
-        self.num_batch += 1
-        if done or self.num_batch > max_batch_size:
+        if done:
             self.fitRewards()
 
     def addToRewards(self, action, state, reward):
         self.inputs.append(np.append(action, state))
+        # add 0.2 to compensate for fuel
         self.rewards.append(reward)
 
     def processDataset(self):
-        end_reward = self.rewards[-1]
-        for i in range(1, self.num_batch):
-            r = self.rewards[i - 1]
-            r1 = self.rewards[i]
-            r = ((1 - discount) * r) + (discount * r1)
+        self.rewards[-1] = np.sum(self.rewards) / 200
+        
+        for i in reversed(range(1, len(self.rewards))):
+            print(self.rewards[i])
+            r = self.rewards[i]
+            self.rewards[i-1] = ((1 - discount) * self.rewards[i-1]) + (discount * r)
+            self.experience_replay.add(self.inputs[i], self.rewards[i-1])
 
-            self.experience_replay.add(self.inputs[i - 1], r)
-
-        t = {"inputs": np.array(self.inputs), "rewards": np.array(self.rewards)}
+        t = {"inputs": np.array(self.inputs), "rewards": self.rewards}
 
         self.rewards = []
         self.inputs = []
@@ -59,8 +57,9 @@ class Critic():
 
     def fitRewards(self):
         dataset = self.processDataset()
-        datasetOld = self.experience_replay.sample(1000)
-        self.nn.fit(datasetOld['inputs'], datasetOld['rewards'], epochs=3, verbose=1)
+        datasetOld = self.experience_replay.sample(9500)
+        print(datasetOld)
+        self.nn.fit(datasetOld['inputs'], datasetOld['rewards'], epochs=1, verbose=1)
         self.nn.fit(dataset['inputs'], dataset['rewards'], epochs=1, verbose=1)
         self.num_batch = 0
 

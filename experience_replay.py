@@ -21,6 +21,8 @@ class ExperienceReplay():
     def sample(self, size):
         i = []
         r = []
+        if size > self.size :
+            size = self.size
         for _ in range(size):
             t = np.random.randint(self.size)
             i.append(self.inputs[t])
