@@ -17,7 +17,7 @@ class Critic():
         self.inputs = []
         self.rewards = []
         self.nn.compile(loss='mean_squared_error', optimizer='adam')
-        self.experience_replay = ExperienceReplay(95000)
+        self.experience_replay = ExperienceReplay(9500)
 
     def choose(self, actions, state):
         # create a matrix from states
@@ -40,14 +40,26 @@ class Critic():
         # add 0.2 to compensate for fuel
         self.rewards.append(reward)
 
+    def normalize(self, d):
+        # d is a (n x dimension) np array
+        d -= np.min(d, axis=0)
+        d /= np.ptp(d, axis=0)
+        return d
+
     def processDataset(self):
-        self.rewards[-1] = np.sum(self.rewards) / 200
+
+        if self.rewards[-1] is not 100:
+            self.rewards[-1] = -100
+        self.rewards[-1] = np.sum(self.rewards)
         
         for i in reversed(range(1, len(self.rewards))):
-            print(self.rewards[i])
             r = self.rewards[i]
             self.rewards[i-1] = ((1 - discount) * self.rewards[i-1]) + (discount * r)
-            self.experience_replay.add(self.inputs[i], self.rewards[i-1])
+
+        self.rewards = self.normalize(self.rewards)
+        
+        for i in range(0, len(self.rewards)):
+            self.experience_replay.add(self.inputs[i], self.rewards[i])
 
         t = {"inputs": np.array(self.inputs), "rewards": self.rewards}
 
@@ -57,7 +69,7 @@ class Critic():
 
     def fitRewards(self):
         dataset = self.processDataset()
-        datasetOld = self.experience_replay.sample(9500)
+        datasetOld = self.experience_replay.sample(5500)
         print(datasetOld)
         self.nn.fit(datasetOld['inputs'], datasetOld['rewards'], epochs=1, verbose=1)
         self.nn.fit(dataset['inputs'], dataset['rewards'], epochs=1, verbose=1)

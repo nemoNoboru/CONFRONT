@@ -30,8 +30,8 @@ class ExperienceReplay():
         return {"inputs": np.array(i), "rewards": np.array(r)}
 
     def removeOne(self):
-        #minimal = np.argmin(np.array(self.rewards))
-        minimal = np.random.randint(self.size)
+        minimal = np.argmin(np.array(self.rewards))
+        # minimal = np.random.randint(self.size)
         del self.inputs[minimal]
         del self.rewards[minimal]
         self.size -= 1

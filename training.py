@@ -14,14 +14,14 @@ np.random.seed(0)
 for j in range(1000):
     observation = env.reset()
     total_reward = 0
-    for i in range(1000):
+    while True:
         env.render()
         #print(env.action_space.sample())
         action = cft.act(observation)
         o, reward, done, info = env.step(action % 1)
         #print("Reward is{}".format(reward))
         total_reward += reward
-        cft.observe(action, observation, reward / 500, done)
+        cft.observe(action, observation, reward, done)
         observation = o
         if done:
             break
